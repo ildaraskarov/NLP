@@ -40,6 +40,8 @@ print(classification_report(y_test, prediction))
 print(confusion_matrix(y_test, prediction))
 
 
+print("=======================================")
 
+print(clf.predict([r'YOu are winner! Congratulations! You have won 500 USD from lottery']))
 
-
+print(df['v2'].loc[df['v1'] == 'spam'].values[0])
