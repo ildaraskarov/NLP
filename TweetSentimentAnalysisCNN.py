@@ -19,8 +19,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-import pydot
-import graphviz
+#import pydot
+#import graphviz
 import json
 
 pd.set_option('display.max_columns', None)
@@ -130,7 +130,7 @@ def tokenizer_to_json(tokenizer):
     with open('tokenizer.json', 'w') as outfile:
         json.dump(json_string, outfile)
 
-def train_test_data_split_preprocess(max_length):
+def train_test_data_split_preprocess(max_length, train_data, test_data):
     """
     a method where train test data were converted to a tf-friendly format
     also a train df was split into train and validation set
@@ -198,9 +198,23 @@ def train_test_data_split_preprocess(max_length):
     return train_ds, valid_ds, test_ds
 
 
-train_ds, valid_ds, test_ds = train_test_data_split_preprocess(max_length)
+def plot_loss(history):
+    plt.plot(history.history['loss'], label=' training data')
+    plt.plot(history.history['val_loss'], label='validation data)')
+    plt.title('Loss for Text Classification')
+    plt.ylabel('Loss value')
+    plt.xlabel('No. epoch')
+    plt.legend(loc="upper left")
+    plt.savefig("loss_graph.png")
 
-
+def plot_accuracy(history):
+    plt.plot(history.history['categorical_accuracy'], label=' (training data)')
+    plt.plot(history.history['val_categorical_accuracy'], label='CategoricalCrossentropy (validation data)')
+    plt.title('CategoricalAccuracy for Text Classification')
+    plt.ylabel('CategoricalAccuracy value')
+    plt.xlabel('No. epoch')
+    plt.legend(loc="upper left")
+    plt.savefig("accuracy_graph.png")
 
 def CNN(train_ds, valid_ds, embedding_dim, seq_length, max_features, epochs):
     """
@@ -239,6 +253,9 @@ def CNN(train_ds, valid_ds, embedding_dim, seq_length, max_features, epochs):
                         validation_data=valid_ds.batch(128),
                         verbose=1)
 
+    plot_loss(history)
+    plot_accuracy(history)
+
     #tf.keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
     return history
@@ -253,40 +270,24 @@ def tokenizer_to_json(tokenizer):
     with open('tokenizer.json', 'w') as outfile:
         json.dump(json_string, outfile)
 
-"""
+
+train_ds, valid_ds, test_ds = train_test_data_split_preprocess(max_length, train_data, test_data)
+
 history = CNN(train_ds,
     valid_ds,
     embedding_dim=64,
     seq_length=max_length,
     max_features=num_words,
     epochs=30)
+
+
+
+
+
+
+
+
 """
-
-
-def plot_loss(history):
-    plt.plot(history.history['loss'], label=' training data')
-    plt.plot(history.history['val_loss'], label='validation data)')
-    plt.title('Loss for Text Classification')
-    plt.ylabel('Loss value')
-    plt.xlabel('No. epoch')
-    plt.legend(loc="upper left")
-    plt.show()
-
-def plot_accuracy(history):
-    plt.plot(history.history['categorical_accuracy'], label=' (training data)')
-    plt.plot(history.history['val_categorical_accuracy'], label='CategoricalCrossentropy (validation data)')
-    plt.title('CategoricalAccuracy for Text Classification')
-    plt.ylabel('CategoricalAccuracy value')
-    plt.xlabel('No. epoch')
-    plt.legend(loc="upper left")
-    plt.show()
-
-
-#plot_loss(history)
-
-#plot_accuracy(history)
-
-
 new_model = tf.keras.models.load_model('CNN_sentiment_analysis')
 print(new_model.summary())
 
@@ -295,15 +296,10 @@ with open('tokenizer.json') as json_file:
 tokenizer1 = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
 
 
-test_data = preprocess_df("data/tweet_test.csv")
-
-x_test  = np.array( tokenizer1.texts_to_sequences(test_data['text'].tolist()) )
-x_test = pad_sequences(x_test, padding='post', maxlen=max_length)
-
 # Generate predictions (probabilities -- the output of the last layer)
 # on test  data using `predict`
 print("Generate predictions for all samples")
-predictions = new_model.predict(x_test)
+predictions = new_model.predict(test_ds)
 print(predictions)
 predict_results = predictions.argmax(axis=1)
 
@@ -315,3 +311,4 @@ test_data['pred_sentiment'] = np.where((test_data.pred_sentiment == '2'),'positi
 labels = ['positive', 'negative', 'neutral']
 
 print(classification_report(test_data['sentiment'].tolist(), test_data['pred_sentiment'].tolist(), labels=labels))
+"""
